@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unicode&特殊文字変換サイト</title>
+<link rel="icon" type="image/x-icon" href="32x32.ico">
+<link rel="apple-touch-icon" href="128x128.png">
+<style>
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #2d2d2d;
+    color: #f0f0f0;
+    padding: 10px;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .card {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+    transition: all 0.3s;
+  }
+
+  .card:hover {
+    box-shadow: 0 6px 40px rgba(0,0,0,0.6);
+  }
+
+  textarea, #output {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    font-size: 16px;
+    font-family: monospace;
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    resize: none;
+    min-height: 100px;
+  }
+
+  button {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    flex-grow: 1;
+    margin: 5px;
+  }
+
+  button:hover {
+    background-color: #383838;
+  }
+  
+  .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .placeholder-text {
+    color: #888;
+  }
+  
+  @media (max-width: 600px) {
+    body {
+      padding: 5px;
+    }
+    .card {
+      margin: 10px auto;
+      padding: 15px;
+    }
+    header {
+      font-size: 20px;
+      padding: 15px 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>Unicode&特殊文字変換</header>
+
+<div class="card">
+  <label for="inputText">文字を入力:</label>
+  <textarea id="inputText" placeholder="ここに文字を入力"></textarea>
+  <div class="button-container">
+    <button onclick="charToUnicode()">文字 → Unicode</button>
+    <button onclick="unicodeToChar()">Unicode → 文字</button>
+    <button onclick="toSpecial()">文字 → 特殊文字</button>
+    <button onclick="fromSpecial()">特殊文字 → 文字</button>
+  </div>
+</div>
+
+<div class="card">
+  <label for="output">結果:</label>
+  <div id="output" class="placeholder-text">変換結果がここに表示されます</div>
+</div>
+
+<script>
+const outputDiv = document.getElementById('output');
+const placeholderText = '変換結果がここに表示されます';
+
+function updateOutputPlaceholder() {
+  if (outputDiv.textContent.trim() === '') {
+    outputDiv.textContent = placeholderText;
+    outputDiv.classList.add('placeholder-text');
+  } else {
+    outputDiv.classList.remove('placeholder-text');
+  }
+}
+
+updateOutputPlaceholder();
+
+function clearPlaceholder() {
+  if (outputDiv.classList.contains('placeholder-text')) {
+    outputDiv.textContent = '';
+    outputDiv.classList.remove('placeholder-text');
+  }
+}
+
+function charToUnicode() {
+  let input = document.getElementById('inputText').value;
+  let result = '';
+  for (let i = 0; i < input.length; i++) {
+    let code = input.codePointAt(i).toString(16).toUpperCase();
+    if (code.length < 4) code = code.padStart(4,'0');
+    result += 'U+' + code + ' ';
+    if (code.length > 4) i++;
+  }
+  outputDiv.textContent = result.trim();
+  updateOutputPlaceholder();
+}
+
+function unicodeToChar() {
+  let input = document.getElementById('inputText').value;
+  let regex = /U\+([0-9A-Fa-f]{4,6})/g;
+  let result = input.replace(regex, (match,p1)=>String.fromCodePoint(parseInt(p1,16)));
+  outputDiv.textContent = result;
+  updateOutputPlaceholder();
+}
+
+const specialMap = {
+  'A':'𝔸','B':'𝔹','C':'ℂ','D':'𝔻','E':'𝔼','F':'𝔽','G':'𝔾','H':'ℍ','I':'ℐ','J':'𝕁',
+  'K':'𝕂','L':'𝕃','M':'𝕄','N':'ℕ','O':'𝕆','P':'ℙ','Q':'ℚ','R':'ℝ','S':'𝕊','T':'𝕋',
+  'U':'𝕌','V':'𝕍','W':'𝕎','X':'𝕏','Y':'𝕐','Z':'ℤ',
+  'a':'𝕒','b':'𝕓','c':'𝕔','d':'𝕕','e':'𝕖','f':'𝕗','g':'𝕘','h':'𝕙','i':'𝕚','j':'𝕛',
+  'k':'𝕜','l':'𝕝','m':'𝕞','n':'𝕟','o':'𝕠','p':'𝕡','q':'𝕢','r':'𝕣','s':'𝕤','t':'𝕥',
+  'u':'𝕦','v':'𝕧','w':'𝕨','x':'𝕩','y':'𝕪','z':'𝕫'
+};
+
+const reverseSpecialMap = {};
+for (let k in specialMap) reverseSpecialMap[specialMap[k]] = k;
+
+function toSpecial() {
+  let input = document.getElementById('inputText').value;
+  let result = '';
+  for (let ch of input) {
+    result += specialMap[ch] || ch;
+  }
+  outputDiv.textContent = result;
+  updateOutputPlaceholder();
+}
+
+function fromSpecial() {
+  let input = document.getElementById('inputText').value;
+  let result = '';
+  for (let ch of input) {
+    result += reverseSpecialMap[ch] || ch;
+  }
+  outputDiv.textContent = result;
+  updateOutputPlaceholder();
+}
+</script>
+
+</body>
+</html>
